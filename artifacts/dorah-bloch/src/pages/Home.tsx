@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { motion, useScroll, useTransform } from "framer-motion";
 
@@ -270,56 +270,252 @@ function CampusLife() {
   );
 }
 
+type AdmissionForm = {
+  studentName: string;
+  dateOfBirth: string;
+  gender: string;
+  previousSchool: string;
+  entryLevel: string;
+  parentName: string;
+  parentPhone: string;
+  parentEmail: string;
+  residence: string;
+  applyingForBursary: string;
+  message: string;
+};
+
+const emptyForm: AdmissionForm = {
+  studentName: "",
+  dateOfBirth: "",
+  gender: "",
+  previousSchool: "",
+  entryLevel: "Senior 1 (S.1)",
+  parentName: "",
+  parentPhone: "",
+  parentEmail: "",
+  residence: "",
+  applyingForBursary: "no",
+  message: "",
+};
+
 function Admissions() {
+  const [form, setForm] = useState<AdmissionForm>(emptyForm);
+  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus("submitting");
+    setErrorMsg("");
+    try {
+      const res = await fetch("/api/admissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error ?? "Submission failed. Please try again.");
+        setStatus("error");
+      } else {
+        setStatus("success");
+        setForm(emptyForm);
+      }
+    } catch {
+      setErrorMsg("Network error. Please check your connection and try again.");
+      setStatus("error");
+    }
+  }
+
+  const inputCls = "w-full border border-border rounded-sm px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground placeholder:text-muted-foreground text-sm";
+  const labelCls = "block text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-1.5";
+
   return (
     <section id="admissions" className="py-24 bg-muted">
       <div className="container mx-auto px-6">
-        <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
-          <div className="md:w-1/2 bg-primary p-10 text-white flex flex-col justify-center relative">
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+        <div className="text-center mb-12">
+          <h2 className="text-accent font-bold tracking-widest uppercase mb-3">Join Us</h2>
+          <h3 className="font-serif text-4xl md:text-5xl text-foreground font-bold mb-4">Apply for Admission</h3>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Take the first step toward a future of excellence. Complete the form below and our admissions team will contact you within 48 hours.
+          </p>
+        </div>
+
+        <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col lg:flex-row">
+          {/* Left info panel */}
+          <div className="lg:w-2/5 bg-primary p-10 text-white flex flex-col justify-between relative">
+            <div className="absolute inset-0 opacity-10"
+              style={{ backgroundImage: "radial-gradient(circle at 20% 80%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }}
+            />
             <div className="relative z-10">
-              <h2 className="text-accent font-bold tracking-widest uppercase mb-2">Join Us</h2>
-              <h3 className="font-serif text-4xl font-bold mb-6">Admissions Now Open</h3>
-              <p className="text-white/80 mb-8">
-                Take the first step towards a future of excellence. We welcome passionate, driven students to join our distinguished community.
+              <h4 className="text-accent font-bold tracking-widest uppercase mb-2 text-sm">Admissions</h4>
+              <h3 className="font-serif text-3xl font-bold mb-6 leading-tight">Welcome to Dorah Bloch International College</h3>
+              <p className="text-white/80 mb-8 leading-relaxed text-sm">
+                We offer O-Level and A-Level programmes in a boarding environment that develops academic excellence, discipline, and lifelong character.
               </p>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-accent text-foreground flex items-center justify-center font-bold text-xs">1</div>
-                  <span>O-Level / S.1 Entry</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-accent text-foreground flex items-center justify-center font-bold text-xs">2</div>
-                  <span>A-Level / S.5 Entry</span>
-                </li>
-              </ul>
+
+              <div className="space-y-5 mb-8">
+                {[
+                  { num: "1", label: "O-Level Entry", desc: "Senior 1 – Senior 4 (S.1 – S.4)" },
+                  { num: "2", label: "A-Level Entry", desc: "Senior 5 – Senior 6 (S.5 – S.6)" },
+                ].map((item) => (
+                  <div key={item.num} className="flex items-start gap-4">
+                    <div className="w-8 h-8 rounded-full bg-accent text-foreground flex items-center justify-center font-bold text-sm shrink-0 mt-0.5">{item.num}</div>
+                    <div>
+                      <p className="font-bold text-white">{item.label}</p>
+                      <p className="text-white/60 text-sm">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-white/20 pt-6 space-y-3 text-sm">
+                <p className="text-white/60">Need help with your application?</p>
+                <p className="font-bold text-accent">+256 772 427 251</p>
+                <p className="text-white/60 text-xs">Bweyale Town Council, Kiryandongo District, Uganda</p>
+              </div>
             </div>
           </div>
-          
-          <div className="md:w-1/2 p-10 bg-white">
-            <h4 className="text-2xl font-bold text-foreground mb-6">Express Interest</h4>
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Student Name</label>
-                <input type="text" className="w-full border border-border rounded-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="John Doe" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Parent/Guardian Phone</label>
-                <input type="tel" className="w-full border border-border rounded-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="+256 772 427 251" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Entry Level</label>
-                <select className="w-full border border-border rounded-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 bg-white">
-                  <option>Senior 1 (S.1)</option>
-                  <option>Senior 2 (S.2)</option>
-                  <option>Senior 3 (S.3)</option>
-                  <option>Senior 5 (S.5)</option>
-                </select>
-              </div>
-              <button type="submit" className="w-full bg-foreground text-white font-bold py-3 rounded-sm hover:bg-foreground/90 transition-colors mt-4">
-                Submit Inquiry
-              </button>
-            </form>
+
+          {/* Right form panel */}
+          <div className="lg:w-3/5 p-10">
+            {status === "success" ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="h-full flex flex-col items-center justify-center text-center py-12"
+              >
+                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6 mx-auto">
+                  <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h4 className="font-serif text-3xl font-bold text-foreground mb-3">Application Received!</h4>
+                <p className="text-muted-foreground text-lg mb-2 max-w-sm">
+                  Thank you for applying to Dorah Bloch International College.
+                </p>
+                <p className="text-muted-foreground text-sm mb-8 max-w-sm">
+                  Our admissions team will review your application and contact you at the phone number provided within 48 hours.
+                </p>
+                <button
+                  onClick={() => setStatus("idle")}
+                  data-testid="button-apply-again"
+                  className="bg-primary text-primary-foreground px-8 py-3 rounded-sm font-bold hover:bg-primary/90 transition-colors"
+                >
+                  Submit Another Application
+                </button>
+              </motion.div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-5" data-testid="form-admissions">
+                <h4 className="text-xl font-bold text-foreground mb-1">Student & Parent Details</h4>
+                <p className="text-muted-foreground text-sm mb-6">All fields marked with * are required.</p>
+
+                {/* Student info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Student Full Name *</label>
+                    <input data-testid="input-student-name" name="studentName" required value={form.studentName} onChange={handleChange} type="text" className={inputCls} placeholder="e.g. Akot Grace" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Date of Birth *</label>
+                    <input data-testid="input-date-of-birth" name="dateOfBirth" required value={form.dateOfBirth} onChange={handleChange} type="date" className={inputCls} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Gender *</label>
+                    <select data-testid="select-gender" name="gender" required value={form.gender} onChange={handleChange} className={inputCls}>
+                      <option value="">Select gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Entry Level *</label>
+                    <select data-testid="select-entry-level" name="entryLevel" required value={form.entryLevel} onChange={handleChange} className={inputCls}>
+                      <option value="Senior 1 (S.1)">Senior 1 (S.1) — O-Level</option>
+                      <option value="Senior 2 (S.2)">Senior 2 (S.2) — O-Level</option>
+                      <option value="Senior 3 (S.3)">Senior 3 (S.3) — O-Level</option>
+                      <option value="Senior 5 (S.5)">Senior 5 (S.5) — A-Level</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Previous School *</label>
+                  <input data-testid="input-previous-school" name="previousSchool" required value={form.previousSchool} onChange={handleChange} type="text" className={inputCls} placeholder="Name of last school attended" />
+                </div>
+
+                <div>
+                  <label className={labelCls}>District / Town of Residence *</label>
+                  <input data-testid="input-residence" name="residence" required value={form.residence} onChange={handleChange} type="text" className={inputCls} placeholder="e.g. Gulu City, Masindi District" />
+                </div>
+
+                {/* Parent info */}
+                <div className="pt-2 border-t border-border">
+                  <h5 className="text-sm font-bold text-foreground/60 uppercase tracking-wider mb-4">Parent / Guardian Information</h5>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Parent / Guardian Name *</label>
+                    <input data-testid="input-parent-name" name="parentName" required value={form.parentName} onChange={handleChange} type="text" className={inputCls} placeholder="Full name" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Phone Number *</label>
+                    <input data-testid="input-parent-phone" name="parentPhone" required value={form.parentPhone} onChange={handleChange} type="tel" className={inputCls} placeholder="+256 7XX XXX XXX" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Email Address (optional)</label>
+                  <input data-testid="input-parent-email" name="parentEmail" value={form.parentEmail} onChange={handleChange} type="email" className={inputCls} placeholder="parent@example.com" />
+                </div>
+
+                <div>
+                  <label className={labelCls}>Are you applying for a Bursary / Scholarship? *</label>
+                  <select data-testid="select-bursary" name="applyingForBursary" required value={form.applyingForBursary} onChange={handleChange} className={inputCls}>
+                    <option value="no">No — paying full fees</option>
+                    <option value="yes">Yes — I would like to apply for financial support</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Additional Message (optional)</label>
+                  <textarea data-testid="input-message" name="message" value={form.message} onChange={handleChange} rows={3} className={inputCls + " resize-none"} placeholder="Any special circumstances, questions, or information for the admissions team..." />
+                </div>
+
+                {status === "error" && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-sm text-sm">
+                    {errorMsg}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={status === "submitting"}
+                  data-testid="button-submit-admission"
+                  className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-sm hover:bg-primary/90 transition-colors shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {status === "submitting" ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Submitting Application...
+                    </>
+                  ) : (
+                    "Submit Application"
+                  )}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>
