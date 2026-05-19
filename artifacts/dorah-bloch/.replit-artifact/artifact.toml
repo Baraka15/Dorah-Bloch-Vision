@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Dorah Bloch International College"
+version = "1.0.0"
+id = "artifacts/dorah-bloch"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24688
+
+[services.development]
+run = "pnpm --filter @workspace/dorah-bloch run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dorah-bloch", "run", "build" ]
+publicDir = "artifacts/dorah-bloch/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24688"
+BASE_PATH = "/"
