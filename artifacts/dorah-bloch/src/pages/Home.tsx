@@ -311,6 +311,7 @@ function Admissions() {
     e.preventDefault();
     setStatus("submitting");
     setErrorMsg("");
+
     try {
       const res = await fetch("/api/admissions", {
         method: "POST",
@@ -321,10 +322,47 @@ function Admissions() {
       if (!res.ok) {
         setErrorMsg(data.error ?? "Submission failed. Please try again.");
         setStatus("error");
-      } else {
-        setStatus("success");
-        setForm(emptyForm);
+        return;
       }
+
+      const refId = `DBIC-ADM-${String(data.id).padStart(4, "0")}`;
+      const bursaryText = form.applyingForBursary === "yes"
+        ? "YES — Requesting financial support"
+        : "No — Paying full fees";
+
+      const subject = encodeURIComponent(
+        `Admission Application — ${form.studentName} (${form.entryLevel}) [${refId}]`
+      );
+
+      const body = encodeURIComponent(
+        `Dear Dorah Bloch International College Admissions Team,\n\n` +
+        `I would like to register my child for admission. Please find the details below:\n\n` +
+        `--- STUDENT DETAILS ---\n` +
+        `Full Name:       ${form.studentName}\n` +
+        `Date of Birth:   ${form.dateOfBirth}\n` +
+        `Gender:          ${form.gender}\n` +
+        `Previous School: ${form.previousSchool}\n` +
+        `Entry Level:     ${form.entryLevel}\n` +
+        `Residence:       ${form.residence}\n` +
+        `Bursary:         ${bursaryText}\n\n` +
+        `--- PARENT / GUARDIAN ---\n` +
+        `Name:  ${form.parentName}\n` +
+        `Phone: ${form.parentPhone}\n` +
+        `Email: ${form.parentEmail || "Not provided"}\n\n` +
+        (form.message ? `--- ADDITIONAL MESSAGE ---\n${form.message}\n\n` : "") +
+        `Reference: ${refId}\n\n` +
+        `Thank you.\n\n` +
+        `${form.parentName}`
+      );
+
+      const mailtoUrl = `mailto:andiadebayor5@gmail.com?subject=${subject}&body=${body}`;
+
+      setStatus("success");
+      setForm(emptyForm);
+
+      setTimeout(() => {
+        window.location.href = mailtoUrl;
+      }, 800);
     } catch {
       setErrorMsg("Network error. Please check your connection and try again.");
       setStatus("error");
@@ -394,20 +432,25 @@ function Admissions() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h4 className="font-serif text-3xl font-bold text-foreground mb-3">Application Received!</h4>
-                <p className="text-muted-foreground text-lg mb-2 max-w-sm">
-                  Thank you for applying to Dorah Bloch International College.
+                <h4 className="font-serif text-3xl font-bold text-foreground mb-3">Almost Done!</h4>
+                <p className="text-muted-foreground text-lg mb-2 max-w-sm font-semibold">
+                  Your email app is opening now.
                 </p>
-                <p className="text-muted-foreground text-sm mb-8 max-w-sm">
-                  Our admissions team will review your application and contact you at the phone number provided within 48 hours.
+                <p className="text-muted-foreground text-sm mb-2 max-w-sm">
+                  Your application details have been filled in automatically. Simply <strong>press Send</strong> in your email app to deliver it to the admissions office.
                 </p>
-                <button
-                  onClick={() => setStatus("idle")}
-                  data-testid="button-apply-again"
-                  className="bg-primary text-primary-foreground px-8 py-3 rounded-sm font-bold hover:bg-primary/90 transition-colors"
-                >
-                  Submit Another Application
-                </button>
+                <p className="text-muted-foreground text-xs mb-8 max-w-sm text-primary font-medium">
+                  If your email app did not open, tap the button below.
+                </p>
+                <div className="flex flex-col gap-3 w-full max-w-xs">
+                  <button
+                    onClick={() => setStatus("idle")}
+                    data-testid="button-apply-again"
+                    className="bg-primary text-primary-foreground px-8 py-3 rounded-sm font-bold hover:bg-primary/90 transition-colors"
+                  >
+                    Submit Another Application
+                  </button>
+                </div>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5" data-testid="form-admissions">
