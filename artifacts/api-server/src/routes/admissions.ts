@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, admissionsTable, insertAdmissionSchema } from "@workspace/db";
 import { desc } from "drizzle-orm";
+import { sendAdmissionNotification } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -19,7 +20,34 @@ router.post("/admissions", async (req, res) => {
       .returning();
 
     req.log.info({ admissionId: admission.id }, "New admission inquiry submitted");
-    res.status(201).json({ success: true, id: admission.id, message: "Application received successfully" });
+
+    sendAdmissionNotification({
+      studentName: admission.studentName,
+      dateOfBirth: admission.dateOfBirth,
+      gender: admission.gender,
+      previousSchool: admission.previousSchool,
+      entryLevel: admission.entryLevel,
+      parentName: admission.parentName,
+      parentPhone: admission.parentPhone,
+      parentEmail: admission.parentEmail,
+      residence: admission.residence,
+      applyingForBursary: admission.applyingForBursary,
+      message: admission.message,
+      submissionId: admission.id,
+      submittedAt: new Date(admission.createdAt).toLocaleString("en-UG", {
+        timeZone: "Africa/Kampala",
+        dateStyle: "full",
+        timeStyle: "short",
+      }),
+    }).catch((err) => {
+      req.log.error({ err }, "Failed to send admission notification email");
+    });
+
+    res.status(201).json({
+      success: true,
+      id: admission.id,
+      message: "Application received successfully",
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to save admission");
     res.status(500).json({ error: "Failed to submit application. Please try again." });
