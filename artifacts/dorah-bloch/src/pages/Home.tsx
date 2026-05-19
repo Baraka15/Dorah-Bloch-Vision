@@ -313,19 +313,22 @@ function Admissions() {
     setErrorMsg("");
 
     try {
-      const res = await fetch("/api/admissions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setErrorMsg(data.error ?? "Submission failed. Please try again.");
-        setStatus("error");
-        return;
+      let refId = `DBIC-ADM-${Date.now().toString().slice(-4)}`;
+
+      try {
+        const res = await fetch("/api/admissions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        const data = await res.json();
+        if (res.ok && data.id) {
+          refId = `DBIC-ADM-${String(data.id).padStart(4, "0")}`;
+        }
+      } catch {
+        // API unavailable — continue with mailto only
       }
 
-      const refId = `DBIC-ADM-${String(data.id).padStart(4, "0")}`;
       const bursaryText = form.applyingForBursary === "yes"
         ? "YES — Requesting financial support"
         : "No — Paying full fees";

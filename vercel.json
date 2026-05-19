@@ -1,0 +1,7 @@
+{
+  "buildCommand": "BASE_PATH=/ pnpm --filter @workspace/dorah-bloch run build",
+  "outputDirectory": "artifacts/dorah-bloch/dist/public",
+  "installCommand": "pnpm install",
+  "framework": null,
+  "rewrites": [{ "source": "/((?!assets/).*)", "destination": "/index.html" }]
+}
